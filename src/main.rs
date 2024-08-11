@@ -1,31 +1,51 @@
 use  std::env ;
 use std::fs ; 
+use std::process ;
+use std::error::Error;
 
 
 
 
 fn main () {
-    let arg : Vec<String > = env::args().collect() ; 
+    let args : Vec<String > = env::args().collect() ; 
     
-    let arg  = parse_config(&arg);
-        println!("seraching for  {}" , arg.file_path) ;
+    let arg: Config = Config::build(&args).unwrap_or_else(|err| {
+        println!("Problem parsing arguments: {err}");
+        process::exit(1);
+    });
+
+    println!("seraching for  {}" , arg.file_path) ;
     println!("in file path {}" , arg.query) ;
-    let contents = fs::read_to_string(tuple.1)
-    .expect("Should have been able to read the file");
-    println!("With text:\n{contents}");
+
+    run(arg);
+   
 }
 
-struct args {
+
+fn run(config: Config) -> Result<(), Box<dyn Error>> {
+    let contents = fs::read_to_string(config.file_path)?;
+
+    println!("With text:\n{contents}");
+
+    Ok(())
+}
+
+
+
+struct Config {
     query  : String ,
     file_path  : String ,
 }
 
+impl Config {
+    fn build(args: &[String]) -> Result<Config,&'static str> {
+        if args.len() < 3 {
+            return Err("not enough arguments");
+        }
 
-fn parse_config (arg : &[String]) -> args {
-    let  query :String = arg[1].clone() ;
-    let  file_path : String  =  arg[2].clone() ;
-    args {
-        query  , 
-        file_path  ,
+        let query = args[1].clone();
+        let file_path = args[2].clone();
+
+        Ok(Config { query, file_path })
     }
 }
